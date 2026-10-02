@@ -2,6 +2,8 @@
 
 **Automated Dataset Health & Machine Learning Readiness Analyzer**
 
+[![CI](https://github.com/igc27/DataGuard/actions/workflows/ci.yml/badge.svg)](https://github.com/igc27/DataGuard/actions/workflows/ci.yml)
+
 DataGuard turns a CSV into an evidence-based dataset review: what is missing,
 what looks suspicious, what needs preprocessing, and how sensible ML baselines
 perform. It combines an explainable quality audit with reproducible scikit-learn

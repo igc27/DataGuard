@@ -1,8 +1,8 @@
 # v1.0.0 validation record
 
 Reference system: Windows, CPython 3.12.10. Dependencies are recorded in
-`requirements-lock.txt`. This record reports checks actually performed locally;
-it does not claim a remote CI run or a live hosted deployment.
+`requirements-lock.txt`. This record reports completed local checks and the successful hosted GitHub
+Actions run. A live hosted application remains a separate deployment step.
 
 | Check | Verified result |
 |---|---|
@@ -23,13 +23,15 @@ it does not claim a remote CI run or a live hosted deployment.
 | Report safety | HTML escaping, omitted raw records, and embedded Plotly verified by tests |
 | Charts | Browser rendering and serializable Plotly data checked |
 | README preview | Actual application screenshot, not a mockup |
-| GitHub Actions references | Official checkout/setup-python v7 refs verified |
+| GitHub Actions | All jobs passed on Linux with Python 3.11, 3.12, and 3.13 |
 | License and attribution | MIT; Copyright (c) 2026 Mohammed Alanazi |
 
 Demo outputs can be regenerated with `python scripts/validate_demo.py`. The
 generated reports are intentionally ignored by Git because they embed several
 megabytes of third-party Plotly JavaScript and are reproducible.
 
-Python 3.11 and 3.13 are configured in remote CI and all pinned packages declare
-compatible Python ranges. Only Python 3.12 was executed on this machine; the
-additional CI environments must be verified once the repository is published.
+Hosted validation completed successfully on Python 3.11, 3.12, and 3.13:
+[GitHub Actions run](https://github.com/igc27/DataGuard/actions/runs/37065945467).
+Each job installed the pinned dependencies, checked Ruff lint and formatting, ran
+the 49-test suite with the 80% coverage gate, built distributions, and passed
+`pip check`. Local Windows validation used Python 3.12.10.

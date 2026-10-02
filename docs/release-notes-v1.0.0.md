@@ -30,8 +30,9 @@ distributions build. CSV upload and dataset profiling were also exercised throug
 the running browser UI. Classification and regression demo workflows generate
 four evaluated baselines each and offline HTML reports.
 
-Remote GitHub Actions results must be verified after publication; local test
-results are not represented as a remote CI run.
+Hosted GitHub Actions also passed on Linux with Python 3.11, 3.12, and 3.13,
+including lint, formatting, tests, coverage, package build, and dependency integrity:
+[verified run](https://github.com/igc27/DataGuard/actions/runs/37065945467).
 
 ## Scope and privacy
 
