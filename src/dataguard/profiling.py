@@ -57,8 +57,11 @@ def identifier_like(name: str, series: pd.Series, kind: str) -> bool:
         return True
     if kind == "numeric":
         finite = values[np.isfinite(values)]
-        return bool(len(finite) == len(values) and (finite % 1 == 0).all()
-                    and (finite.is_monotonic_increasing or finite.is_monotonic_decreasing))
+        return bool(
+            len(finite) == len(values)
+            and (finite % 1 == 0).all()
+            and (finite.is_monotonic_increasing or finite.is_monotonic_decreasing)
+        )
     return False
 
 
@@ -78,16 +81,34 @@ def profile_dataset(frame: pd.DataFrame) -> Profile:
         unique = int(series.nunique())
         common = float(valid.value_counts(normalize=True).iloc[0]) if count else 0.0
         stats = {
-            "column": str(name), "dtype": str(series.dtype), "kind": kind,
-            "missing": int(series.isna().sum()), "missing_pct": float(series.isna().mean() * 100),
-            "unique": unique, "cardinality": unique / count if count else 0.0,
-            "constant": unique <= 1, "near_constant": unique > 1 and common >= 0.98,
+            "column": str(name),
+            "dtype": str(series.dtype),
+            "kind": kind,
+            "missing": int(series.isna().sum()),
+            "missing_pct": float(series.isna().mean() * 100),
+            "unique": unique,
+            "cardinality": unique / count if count else 0.0,
+            "constant": unique <= 1,
+            "near_constant": unique > 1 and common >= 0.98,
             "id_like": identifier_like(str(name), series, kind),
-            "high_cardinality": kind == "categorical" and unique > 50 and unique / max(count, 1) > 0.5,
-            "invalid": 0, "outliers": 0, "outlier_pct": 0.0, "zero_pct": 0.0,
-            "mixed_numeric": False, "mean": None, "std": None, "min": None,
-            "q25": None, "median": None, "q75": None, "max": None, "skew": None,
-            "iqr_lower": None, "iqr_upper": None,
+            "high_cardinality": kind == "categorical"
+            and unique > 50
+            and unique / max(count, 1) > 0.5,
+            "invalid": 0,
+            "outliers": 0,
+            "outlier_pct": 0.0,
+            "zero_pct": 0.0,
+            "mixed_numeric": False,
+            "mean": None,
+            "std": None,
+            "min": None,
+            "q25": None,
+            "median": None,
+            "q75": None,
+            "max": None,
+            "skew": None,
+            "iqr_lower": None,
+            "iqr_upper": None,
         }
         if kind == "numeric":
             nums = pd.to_numeric(series, errors="coerce").astype(float)
@@ -99,16 +120,25 @@ def profile_dataset(frame: pd.DataFrame) -> Profile:
                 lower, upper = q1 - 1.5 * iqr, q3 + 1.5 * iqr
                 # A zero IQR has no stable fence; report no IQR detections, transparently.
                 outliers = int(((finite < lower) | (finite > upper)).sum()) if iqr > 0 else 0
-                stats.update({
-                    "mean": float(finite.mean()), "std": float(finite.std()) if len(finite) > 1 else None,
-                    "min": float(finite.min()), "q25": float(q1), "median": float(finite.median()),
-                    "q75": float(q3), "max": float(finite.max()),
-                    "skew": float(finite.skew()) if len(finite) >= 3 and finite.nunique() > 1 else None,
-                    "zero_pct": float((finite == 0).mean() * 100), "outliers": outliers,
-                    "outlier_pct": outliers / len(finite) * 100,
-                    "iqr_lower": float(lower) if iqr > 0 else None,
-                    "iqr_upper": float(upper) if iqr > 0 else None,
-                })
+                stats.update(
+                    {
+                        "mean": float(finite.mean()),
+                        "std": float(finite.std()) if len(finite) > 1 else None,
+                        "min": float(finite.min()),
+                        "q25": float(q1),
+                        "median": float(finite.median()),
+                        "q75": float(q3),
+                        "max": float(finite.max()),
+                        "skew": float(finite.skew())
+                        if len(finite) >= 3 and finite.nunique() > 1
+                        else None,
+                        "zero_pct": float((finite == 0).mean() * 100),
+                        "outliers": outliers,
+                        "outlier_pct": outliers / len(finite) * 100,
+                        "iqr_lower": float(lower) if iqr > 0 else None,
+                        "iqr_upper": float(upper) if iqr > 0 else None,
+                    }
+                )
         elif kind == "categorical" and count:
             ratio = pd.to_numeric(valid, errors="coerce").notna().mean()
             stats["mixed_numeric"] = bool(0.8 <= ratio < 1)
@@ -126,7 +156,8 @@ def profile_dataset(frame: pd.DataFrame) -> Profile:
     corr = corr_frame.corr(min_periods=3)
     pairs = [
         {"feature_a": a, "feature_b": b, "correlation": float(corr.loc[a, b])}
-        for i, a in enumerate(numeric) for b in numeric[i + 1:]
+        for i, a in enumerate(numeric)
+        for b in numeric[i + 1 :]
         if pd.notna(corr.loc[a, b]) and abs(corr.loc[a, b]) >= 0.9
     ]
     # Hash candidates in linear time, then confirm equality to guard hash collisions.
@@ -139,5 +170,14 @@ def profile_dataset(frame: pd.DataFrame) -> Profile:
                 duplicates.append((str(previous), str(name)))
                 break
         buckets.setdefault(key, []).append(name)
-    return Profile(len(frame), len(frame.columns), int(frame.memory_usage(deep=True).sum()),
-                   int(frame.duplicated().sum()), table, corr, pairs, duplicates, notes)
+    return Profile(
+        len(frame),
+        len(frame.columns),
+        int(frame.memory_usage(deep=True).sum()),
+        int(frame.duplicated().sum()),
+        table,
+        corr,
+        pairs,
+        duplicates,
+        notes,
+    )

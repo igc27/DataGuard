@@ -17,18 +17,48 @@ def quality_findings(profile: Profile) -> list[dict[str, str]]:
     """Return specific evidence and an action for every triggered finding."""
     findings = []
     if profile.duplicate_rows:
-        findings.append({"severity": "warning", "column": "Dataset", "issue": "Duplicate rows",
-                         "evidence": f"{profile.duplicate_rows:,} repeated records",
-                         "action": "Review repeated records; prevent train/test overlap."})
+        findings.append(
+            {
+                "severity": "warning",
+                "column": "Dataset",
+                "issue": "Duplicate rows",
+                "evidence": f"{profile.duplicate_rows:,} repeated records",
+                "action": "Review repeated records; prevent train/test overlap.",
+            }
+        )
     rules = [
         ("missing", "Missing values", "Impute from training data or investigate collection gaps."),
-        ("invalid", "Infinite numeric values", "Investigate and replace infinities before modeling."),
+        (
+            "invalid",
+            "Infinite numeric values",
+            "Investigate and replace infinities before modeling.",
+        ),
         ("constant", "Constant or empty feature", "Exclude features without usable variation."),
-        ("near_constant", "Near-constant feature", "Review usefulness; rare values may still matter."),
-        ("id_like", "Possible identifier (heuristic)", "Review and exclude identifiers from baselines."),
-        ("high_cardinality", "High-cardinality category", "Review IDs/text; consider domain-aware encoding."),
-        ("mixed_numeric", "Possible mixed numeric types (heuristic)", "Check non-numeric tokens before conversion."),
-        ("outliers", "IQR outlier candidates", "Inspect unusual observations; no rows are deleted."),
+        (
+            "near_constant",
+            "Near-constant feature",
+            "Review usefulness; rare values may still matter.",
+        ),
+        (
+            "id_like",
+            "Possible identifier (heuristic)",
+            "Review and exclude identifiers from baselines.",
+        ),
+        (
+            "high_cardinality",
+            "High-cardinality category",
+            "Review IDs/text; consider domain-aware encoding.",
+        ),
+        (
+            "mixed_numeric",
+            "Possible mixed numeric types (heuristic)",
+            "Check non-numeric tokens before conversion.",
+        ),
+        (
+            "outliers",
+            "IQR outlier candidates",
+            "Inspect unusual observations; no rows are deleted.",
+        ),
     ]
     for name, row in profile.column_stats.iterrows():
         for field, issue, action in rules:
@@ -40,19 +70,45 @@ def quality_findings(profile: Profile) -> list[dict[str, str]]:
                     evidence = f"{row['outliers']} finite values ({row['outlier_pct']:.1f}%)"
                 elif field in {"high_cardinality", "id_like"}:
                     evidence = f"{row['unique']} unique values; ratio {row['cardinality']:.1%}"
-                findings.append({"severity": "info" if field == "outliers" else "warning",
-                                 "column": str(name), "issue": issue, "evidence": evidence, "action": action})
+                findings.append(
+                    {
+                        "severity": "info" if field == "outliers" else "warning",
+                        "column": str(name),
+                        "issue": issue,
+                        "evidence": evidence,
+                        "action": action,
+                    }
+                )
         if row.zero_pct >= 80:
-            findings.append({"severity": "info", "column": str(name), "issue": "Zero-heavy feature",
-                             "evidence": f"{row.zero_pct:.1f}% of finite values are zero",
-                             "action": "Check whether zeros are structural or missing-value placeholders."})
+            findings.append(
+                {
+                    "severity": "info",
+                    "column": str(name),
+                    "issue": "Zero-heavy feature",
+                    "evidence": f"{row.zero_pct:.1f}% of finite values are zero",
+                    "action": "Check whether zeros are structural or missing-value placeholders.",
+                }
+            )
     for a, b in profile.duplicate_columns:
-        findings.append({"severity": "warning", "column": b, "issue": "Duplicate column",
-                         "evidence": f"Exactly equal to {a}", "action": "Review redundant features."})
+        findings.append(
+            {
+                "severity": "warning",
+                "column": b,
+                "issue": "Duplicate column",
+                "evidence": f"Exactly equal to {a}",
+                "action": "Review redundant features.",
+            }
+        )
     for pair in profile.correlated_pairs:
-        findings.append({"severity": "info", "column": pair['feature_a'],
-                         "issue": "Strong numerical correlation", "evidence": f"{pair['feature_b']}: r={pair['correlation']:.3f}",
-                         "action": "Review collinearity; correlation alone does not establish leakage."})
+        findings.append(
+            {
+                "severity": "info",
+                "column": pair["feature_a"],
+                "issue": "Strong numerical correlation",
+                "evidence": f"{pair['feature_b']}: r={pair['correlation']:.3f}",
+                "action": "Review collinearity; correlation alone does not establish leakage.",
+            }
+        )
     return findings
 
 
@@ -70,7 +126,15 @@ def health_score(profile: Profile) -> Score:
         ("High-cardinality categories", 5, table.high_cardinality.mean()),
         ("Possible mixed numeric types", 5, table.mixed_numeric.mean()),
     ]
-    breakdown = pd.DataFrame([{"factor": name, "max_penalty": budget,
-                              "rate": float(rate), "penalty": float(budget * rate)}
-                             for name, budget, rate in factors])
+    breakdown = pd.DataFrame(
+        [
+            {
+                "factor": name,
+                "max_penalty": budget,
+                "rate": float(rate),
+                "penalty": float(budget * rate),
+            }
+            for name, budget, rate in factors
+        ]
+    )
     return Score(round(max(0, 100 - breakdown.penalty.sum()), 1), breakdown)
